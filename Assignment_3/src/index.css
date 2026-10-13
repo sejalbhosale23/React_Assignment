@@ -1,0 +1,32 @@
+css
+/* Reset default browser spacing */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Prevent unwanted default page styling */
+html {
+  min-width: 320px;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  display: block;
+}
+
+/* Allow the React app to use the full page width */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Consistent form controls */
+button,
+input {
+  font: inherit;
+}
+
