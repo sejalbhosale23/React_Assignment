@@ -1,0 +1,113 @@
+
+name: Deploy React Assignments
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build all assignments
+        run: |
+          set -e
+          mkdir -p site
+
+          for assignment in Assignment_1 Assignment_2 Assignment_3 Assignment_4 Assignment_5 Assignment_6
+          do
+            echo "Building $assignment"
+
+            if [ ! -f "$assignment/package.json" ]; then
+              echo "ERROR: $assignment/package.json not found"
+              exit 1
+            fi
+
+            cd "$assignment"
+            npm install
+            npm run build -- --base="/React_Assignment/$assignment/"
+            cd ..
+
+            mkdir -p "site/$assignment"
+            cp -r "$assignment/dist/." "site/$assignment/"
+          done
+
+      - name: Create homepage
+        run: |
+          cat > site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>My React Assignments</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                max-width: 700px;
+                margin: 50px auto;
+                padding: 20px;
+                background: #f4f6f9;
+              }
+              h1 { color: #2563eb; }
+              a {
+                display: block;
+                padding: 15px;
+                margin: 12px 0;
+                background: white;
+                border-radius: 8px;
+                color: #2563eb;
+                text-decoration: none;
+                box-shadow: 0 2px 6px #ddd;
+              }
+              a:hover { background: #e8efff; }
+            </style>
+          </head>
+          <body>
+            <h1>My React Assignments</h1>
+            <p>Select an assignment to view its output.</p>
+            <a href="Assignment_1/">Assignment 1</a>
+            <a href="Assignment_2/">Assignment 2</a>
+            <a href="Assignment_3/">Assignment 3</a>
+            <a href="Assignment_4/">Assignment 4</a>
+            <a href="Assignment_5/">Assignment 5</a>
+            <a href="Assignment_6/">Assignment 6</a>
+          </body>
+          </html>
+          EOF
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
